@@ -1,0 +1,26 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import NearestNeighbors
+from sklearn.metrics import mean_squared_error
+from math import sqrt
+movie_data = pd.read_csv('your_dataset.csv')
+
+train_data, test_data = train_test_split(movie_data, test_size=0.2, random_state=42)
+
+knn_model = NearestNeighbors(n_neighbors=5, algorithm='auto').fit(train_data[['user_id', 'movie_id']])
+
+user_id_to_predict = 123  # Replace with an actual user ID from your dataset
+user_movies = train_data[train_data['user_id'] == user_id_to_predict][['user_id', 'movie_id']]
+
+distances, indices = knn_model.kneighbors(user_movies)
+
+last_watched_movie = user_movies['movie_id'].iloc[-1]
+
+recommended_movies = train_data['movie_id'].iloc[indices.flatten()]
+recommended_movies = recommended_movies[recommended_movies != last_watched_movie].unique()[:5]
+
+print(f"Recommended movies for user {user_id_to_predict}: {recommended_movies}")
+
+predictions = knn_model.kneighbors(test_data[['user_id', 'movie_id']])[1]
+rmse = sqrt(mean_squared_error(predictions, test_data['rating']))
+print(f"Root Mean Squared Error (RMSE): {rmse}")
